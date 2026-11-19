@@ -92,26 +92,24 @@ enum Input {
 }
 
 fn read_input(input: Input) -> Result<Rotations> {
-    let current_dir = env::current_dir()?;
-    let base_path = if cfg!(test) {
-        current_dir.as_path()
-    } else {
-        Path::new(env!("CARGO_PKG_NAME"))
-    };
-    let file_name = match input {
-        Input::Small => "input_small.txt",
-        Input::Large => "input.txt",
-    };
-    let file = File::open(base_path.join(file_name))?;
-    let reader = BufReader::new(file);
-
-    let rotations = reader
+    let rotations = 
+        read_file(input)?
         .lines()
         .filter_map(|line| line.ok())
         .map(|line| line.parse::<Rotation>())
         .filter_map(|rotation| rotation.ok())
         .collect::<Vec<Rotation>>();
     Ok(Rotations(rotations))
+}
+
+fn read_file(input: Input) -> Result<BufReader<File>> {
+    let base_path = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let file_name = match input {
+        Input::Small => "input_small.txt",
+        Input::Large => "input.txt",
+    };
+    let file = File::open(base_path.join(file_name))?;
+    Ok(BufReader::new(file))
 }
 
 fn rotate_dial(dial: u8, rotation: &Rotation) -> Result<DialRotation> {
