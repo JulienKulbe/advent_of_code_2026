@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use std::env;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
@@ -24,7 +24,7 @@ fn calculate_zeros(input: &Rotations) -> DialResult {
     let mut end_zeros = 0;
     let mut total_zeros = 0;
     let mut dial = DIAL_START_POS;
-    for rotation in &input.0 {
+    for rotation in input {
         let dialed = rotate_dial(dial, rotation);
         if dialed.end_position == 0 {
             end_zeros += 1;
@@ -44,8 +44,7 @@ struct DialResult {
     total_zeros: u32,
 }
 
-#[derive(Debug)]
-struct Rotations(Vec<Rotation>);
+type Rotations = Vec<Rotation>;
 
 #[derive(Debug)]
 struct Rotation {
@@ -56,7 +55,8 @@ struct Rotation {
 impl FromStr for Rotation {
     type Err = anyhow::Error;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let (direction, value) = s.split_at(1);
+        let slitted = s.split_at_checked(1);
+        let (direction, value) = slitted.ok_or_else(|| anyhow!("invalid line"))?;
         let direction = direction.parse::<Direction>()?;
         let value = value.parse::<i32>()?;
         Ok(Rotation { direction, value })
@@ -97,9 +97,8 @@ fn read_input(input: Input) -> Result<Rotations> {
         .lines()
         .filter_map(|line| line.ok())
         .map(|line| line.parse::<Rotation>())
-        .filter_map(|rotation| rotation.ok())
-        .collect::<Vec<Rotation>>();
-    Ok(Rotations(rotations))
+        .collect::<Result<Vec<Rotation>>>()?;
+    Ok(rotations)
 }
 
 fn read_file(input: Input) -> Result<BufReader<File>> {
