@@ -47,35 +47,18 @@ struct DialResult {
 type Rotations = Vec<Rotation>;
 
 #[derive(Debug)]
-struct Rotation {
-    direction: Direction,
-    value: i32,
-}
+struct Rotation(i32);
 
 impl FromStr for Rotation {
     type Err = anyhow::Error;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let slitted = s.split_at_checked(1);
         let (direction, value) = slitted.ok_or_else(|| anyhow!("invalid line"))?;
-        let direction = direction.parse::<Direction>()?;
         let value = value.parse::<i32>()?;
-        Ok(Rotation { direction, value })
-    }
-}
-
-#[derive(Debug)]
-enum Direction {
-    Left,
-    Right,
-}
-
-impl FromStr for Direction {
-    type Err = anyhow::Error;
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "R" => Ok(Direction::Right),
-            "L" => Ok(Direction::Left),
-            _ => Err(anyhow::anyhow!("Unknown direction: {s}")),
+        match direction {
+            "L" => Ok(Rotation(-value)),
+            "R" => Ok(Rotation(value)),
+            _ => Err(anyhow!("invalid rotation direction")),
         }
     }
 }
@@ -112,12 +95,7 @@ fn read_file(input: Input) -> Result<BufReader<File>> {
 }
 
 fn rotate_dial(dial: i32, rotation: &Rotation) -> DialRotation {
-    let mut end_position = dial
-        + match rotation.direction {
-            Direction::Left => -1 * rotation.value,
-            Direction::Right => rotation.value,
-        };
-
+    let mut end_position = dial + rotation.0;
     let mut zero_clicks = (end_position / DIAL_POSITIONS).unsigned_abs();
     if (dial.is_positive() && end_position.is_negative())
         || (dial.is_negative() && end_position.is_positive())
