@@ -5,12 +5,13 @@ use std::io::{BufRead, BufReader};
 use std::path::Path;
 use std::str::FromStr;
 
-const DIAL_START_POS: u8 = 50;
+const DIAL_START_POS: i32 = 50;
+const DIAL_POSITIONS: i32 = 100;
 
 fn main() -> Result<()> {
     for input in [Input::Small, Input::Large] {
         let rotations = read_input(input)?;
-        let result = calculate_zeros(&rotations)?;
+        let result = calculate_zeros(&rotations);
         println!(
             "There are {} zero positions, {} end zero positions.",
             result.total_zeros, result.end_zeros
@@ -19,22 +20,22 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn calculate_zeros(input: &Rotations) -> Result<DialResult> {
+fn calculate_zeros(input: &Rotations) -> DialResult {
     let mut end_zeros = 0;
     let mut total_zeros = 0;
     let mut dial = DIAL_START_POS;
     for rotation in &input.0 {
-        let dialed = rotate_dial(dial, rotation)?;
+        let dialed = rotate_dial(dial, rotation);
         if dialed.end_position == 0 {
             end_zeros += 1;
         }
         dial = dialed.end_position;
         total_zeros += dialed.zero_clicks;
     }
-    Ok(DialResult {
+    DialResult {
         end_zeros,
         total_zeros,
-    })
+    }
 }
 
 #[derive(Debug)]
@@ -49,7 +50,7 @@ struct Rotations(Vec<Rotation>);
 #[derive(Debug)]
 struct Rotation {
     direction: Direction,
-    value: u32,
+    value: i32,
 }
 
 impl FromStr for Rotation {
@@ -57,7 +58,7 @@ impl FromStr for Rotation {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let (direction, value) = s.split_at(1);
         let direction = direction.parse::<Direction>()?;
-        let value = value.parse::<u32>()?;
+        let value = value.parse::<i32>()?;
         Ok(Rotation { direction, value })
     }
 }
@@ -81,7 +82,7 @@ impl FromStr for Direction {
 
 #[derive(Debug)]
 struct DialRotation {
-    end_position: u8,
+    end_position: i32,
     zero_clicks: u32,
 }
 
@@ -92,8 +93,7 @@ enum Input {
 }
 
 fn read_input(input: Input) -> Result<Rotations> {
-    let rotations = 
-        read_file(input)?
+    let rotations = read_file(input)?
         .lines()
         .filter_map(|line| line.ok())
         .map(|line| line.parse::<Rotation>())
@@ -112,36 +112,26 @@ fn read_file(input: Input) -> Result<BufReader<File>> {
     Ok(BufReader::new(file))
 }
 
-fn rotate_dial(dial: u8, rotation: &Rotation) -> Result<DialRotation> {
-    let mut dial = i32::from(dial);
-    let mut zero_clicks: i32 = 0;
-    match rotation.direction {
-        Direction::Left => {
-            if dial == 0 {
-                zero_clicks = -1;
-            }
-            dial -= rotation.value.cast_signed();
-            while dial < 0 {
-                dial += 100;
-                zero_clicks += 1;
-            }
-            if dial == 0 {
-                zero_clicks += 1;
-            }
-        }
-        Direction::Right => {
-            dial += rotation.value.cast_signed();
-            while dial >= 100 {
-                dial -= 100;
-                zero_clicks += 1;
-            }
-        }
-    }
+fn rotate_dial(dial: i32, rotation: &Rotation) -> DialRotation {
+    let mut end_position = dial
+        + match rotation.direction {
+            Direction::Left => -1 * rotation.value,
+            Direction::Right => rotation.value,
+        };
 
-    Ok(DialRotation {
-        end_position: u8::try_from(dial)?,
-        zero_clicks: zero_clicks.cast_unsigned(),
-    })
+    let mut zero_clicks = (end_position / DIAL_POSITIONS).unsigned_abs();
+    if (dial.is_positive() && end_position.is_negative())
+        || (dial.is_negative() && end_position.is_positive())
+        || end_position == 0
+    {
+        zero_clicks += 1;
+    }
+    end_position = end_position.rem_euclid(DIAL_POSITIONS);
+
+    DialRotation {
+        end_position,
+        zero_clicks,
+    }
 }
 
 #[cfg(test)]
@@ -151,28 +141,28 @@ mod tests {
     #[test]
     fn small_count_zero_dial_end_positions() {
         let input = read_input(Input::Small).unwrap();
-        let result = calculate_zeros(&input).unwrap();
+        let result = calculate_zeros(&input);
         assert_eq!(result.end_zeros, 3);
     }
 
     #[test]
     fn small_count_zero_dial_positions() {
         let input = read_input(Input::Small).unwrap();
-        let result = calculate_zeros(&input).unwrap();
+        let result = calculate_zeros(&input);
         assert_eq!(result.total_zeros, 6);
     }
 
     #[test]
     fn normal_count_zero_dial_end_positions() {
         let input = read_input(Input::Large).unwrap();
-        let result = calculate_zeros(&input).unwrap();
+        let result = calculate_zeros(&input);
         assert_eq!(result.end_zeros, 1011);
     }
 
     #[test]
     fn normal_count_zero_dial_positions() {
         let input = read_input(Input::Large).unwrap();
-        let result = calculate_zeros(&input).unwrap();
+        let result = calculate_zeros(&input);
         assert_eq!(result.total_zeros, 5937);
     }
 }
