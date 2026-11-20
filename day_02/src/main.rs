@@ -29,7 +29,7 @@ struct Range {
     max: u64,
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 enum InvalidIds {
     TwoParts,
     Multiple,
@@ -51,7 +51,7 @@ fn sum_invalid_ids(ranges: &Ranges, id_type: InvalidIds) -> u64 {
     for range in ranges {
         for value in range.min..=range.max {
             if is_invalid_id(value, id_type) {
-                //println!("Invalid value: {}", value);
+                println!("Invalid value: {}", value);
                 sum += value;
             }
         }
@@ -60,42 +60,28 @@ fn sum_invalid_ids(ranges: &Ranges, id_type: InvalidIds) -> u64 {
 }
 
 fn is_invalid_id(value: u64, id_type: InvalidIds) -> bool {
-    match id_type {
-        InvalidIds::TwoParts => {
-            let digits = value.ilog10() + 1;
-            // all values with odd number of digits are valid
-            if digits % 2 == 1 {
-                return false;
-            }
-            let half_digits = digits / 2;
-            let divisor = 10_u64.pow(half_digits);
-            let first = value % divisor;
-            let second = value / divisor;
-            first == second
+    let value_str = value.to_string();
+    let digits = value_str.len();
+    let half_digits = digits / 2;
+
+    for parts in 1..=half_digits {
+        if id_type == InvalidIds::TwoParts && (parts != half_digits || digits % 2 == 1) {
+            continue;
         }
-
-        InvalidIds::Multiple => {
-            let value_str = value.to_string();
-            let digits = value_str.len();
-            let half_digits = digits / 2;
-
-            for parts in 1..=half_digits {
-                if digits % parts != 0 {
-                    continue;
-                }
-                let parts: Vec<&str> = value_str
-                    .as_bytes()
-                    .chunks(parts)
-                    .map(|c| from_utf8(c).unwrap())
-                    .collect();
-                let first = parts[0];
-                if parts.iter().all(|&part| part == first) {
-                    return true;
-                }
-            }
-            false
+        if digits % parts != 0 {
+            continue;
+        }
+        let parts: Vec<&str> = value_str
+            .as_bytes()
+            .chunks(parts)
+            .map(|c| from_utf8(c).unwrap())
+            .collect();
+        let first = parts[0];
+        if parts.iter().all(|&part| part == first) {
+            return true;
         }
     }
+    false
 }
 
 
