@@ -1,8 +1,9 @@
 [workspace]
 resolver = "3"
 members = [
-    "day_01"
-, "day_02"]
+    "day_01",
+    "day_02", "day_03",
+    "reindeer"]
 
 [workspace.package]
 version = "0.1.0"

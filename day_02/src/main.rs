@@ -1,6 +1,6 @@
 use anyhow::{Result, anyhow};
-use std::fs::File;
-use std::io::{BufReader, Read};
+use reindeer::{Input, read_file};
+use std::io::Read;
 use std::path::Path;
 use std::str::{FromStr, from_utf8};
 
@@ -13,12 +13,6 @@ fn main() -> Result<()> {
     let sum = sum_invalid_ids(&ranges, InvalidIds::Multiple);
     println!("Sum: {}", sum);
     Ok(())
-}
-
-#[derive(Debug, Copy, Clone)]
-enum Input {
-    Small,
-    Large,
 }
 
 type Ranges = Vec<Range>;
@@ -86,7 +80,7 @@ fn is_invalid_id(value: u64, id_type: InvalidIds) -> bool {
 
 
 fn read_input(input: Input) -> Result<Ranges> {
-    let mut reader = read_file(input)?;
+    let mut reader = read_file(Path::new(env!("CARGO_MANIFEST_DIR")), input)?;
     let mut file_input: String = String::new();
     reader.read_to_string(&mut file_input)?;
 
@@ -95,16 +89,6 @@ fn read_input(input: Input) -> Result<Ranges> {
         .filter_map(|line| line.parse::<Range>().ok())
         .collect::<Vec<Range>>();
     Ok(ranges)
-}
-
-fn read_file(input: Input) -> Result<BufReader<File>> {
-    let base_path = Path::new(env!("CARGO_MANIFEST_DIR"));
-    let file_name = match input {
-        Input::Small => "input_small.txt",
-        Input::Large => "input.txt",
-    };
-    let file = File::open(base_path.join(file_name))?;
-    Ok(BufReader::new(file))
 }
 
 #[cfg(test)]

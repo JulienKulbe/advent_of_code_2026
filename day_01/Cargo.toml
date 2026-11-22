@@ -8,4 +8,5 @@ authors.workspace = true
 workspace = true
 
 [dependencies]
+reindeer = { path = "../reindeer" }
 anyhow = { workspace = true}

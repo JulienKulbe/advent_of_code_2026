@@ -1,7 +1,6 @@
-use anyhow::{anyhow, Result};
-use std::env;
-use std::fs::File;
-use std::io::{BufRead, BufReader};
+use anyhow::{Result, anyhow};
+use reindeer::{Input, read_file};
+use std::io::BufRead;
 use std::path::Path;
 use std::str::FromStr;
 
@@ -68,29 +67,13 @@ struct DialRotation {
     zero_clicks: u32,
 }
 
-#[derive(Debug, Copy, Clone)]
-enum Input {
-    Small,
-    Large,
-}
-
 fn read_input(input: Input) -> Result<Rotations> {
-    let rotations = read_file(input)?
+    let rotations = read_file(Path::new(env!("CARGO_MANIFEST_DIR")), input)?
         .lines()
         .filter_map(|line| line.ok())
         .map(|line| line.parse::<Rotation>())
         .collect::<Result<Vec<Rotation>>>()?;
     Ok(rotations)
-}
-
-fn read_file(input: Input) -> Result<BufReader<File>> {
-    let base_path = Path::new(env!("CARGO_MANIFEST_DIR"));
-    let file_name = match input {
-        Input::Small => "input_small.txt",
-        Input::Large => "input.txt",
-    };
-    let file = File::open(base_path.join(file_name))?;
-    Ok(BufReader::new(file))
 }
 
 fn rotate_dial(dial: i32, rotation: &Rotation) -> DialRotation {

@@ -5,6 +5,7 @@ edition.workspace = true
 authors.workspace = true
 
 [dependencies]
+reindeer = { path = "../reindeer" }
 anyhow = { workspace = true}
 
 [lints]

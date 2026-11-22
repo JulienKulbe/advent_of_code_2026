@@ -13,10 +13,27 @@ name = "day_01"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "reindeer",
 ]
 
 [[package]]
 name = "day_02"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "reindeer",
+]
+
+[[package]]
+name = "day_03"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "reindeer",
+]
+
+[[package]]
+name = "reindeer"
 version = "0.1.0"
 dependencies = [
  "anyhow",
