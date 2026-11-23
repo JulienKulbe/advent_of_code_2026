@@ -5,7 +5,7 @@ use std::path::Path;
 
 fn main() -> Result<()> {
     let banks = read_input(Input::Small)?;
-    let joltage = calculate_total_output_joltage(&banks);
+    let joltage = calculate_total_output_joltage(&banks, 2);
     println!("Total output is {}", joltage);
     Ok(())
 }
@@ -26,52 +26,26 @@ fn read_input(input: Input) -> Result<BatteryBanks> {
         .collect::<BatteryBanks>())
 }
 
-fn calculate_total_output_joltage(banks: &BatteryBanks) -> usize {
+fn calculate_total_output_joltage(banks: &BatteryBanks, digits: usize) -> usize {
     banks
         .iter()
-        .map(|bank| calculate_joltage(bank))
+        .map(|bank| calculate_joltage_ext(bank, digits))
         .sum()
 }
 
-fn calculate_total_output_joltage_ext(banks: &BatteryBanks) -> usize {
-    banks
-        .iter()
-        .map(|bank| calculate_joltage_ext(bank, 12))
-        .sum()
-}
-
-fn calculate_joltage(bank: &BatteryBank) -> usize {
-    let first = bank
-        .iter()
-        .take(bank.len() - 1)
-        .enumerate()
-        .rev()
-        .max_by(|x, y| x.1.cmp(&y.1))
-        .unwrap();
-    let second = bank
-        .iter()
-        .skip(first.0+1)
-        .max()
-        .unwrap();
-
-    (first.1 * 10 + second) as usize
-}
-
-fn calculate_joltage_ext(bank: &BatteryBank, digits: u8) -> usize {
-    let mut max_values = Vec::<u8>::with_capacity(digits as usize);
-    let bank_len = bank.len();
-
-    let mut bank_index: i32 = -1;
+fn calculate_joltage_ext(bank: &BatteryBank, digits: usize) -> usize {
+    let mut max_values = Vec::<u8>::with_capacity(digits);
+    let mut bank_index = 0;
     for index in (0..digits).rev() {
         let max = bank
             .iter()
             .enumerate()
-            .take(bank_len - index as usize)
-            .skip((bank_index + 1) as usize)
+            .take(bank.len() - index)
+            .skip(bank_index)
             .rev()
             .max_by(|x, y| x.1.cmp(&y.1))
             .unwrap();
-        bank_index = max.0 as i32;
+        bank_index = max.0 + 1;
         max_values.push(*max.1);
     }
     println!("{:?}", max_values);
@@ -95,21 +69,21 @@ mod tests {
     #[test]
     fn small_sum_joltage() {
         let banks = read_input(Input::Small).unwrap();
-        let joltage = calculate_total_output_joltage(&banks);
+        let joltage = calculate_total_output_joltage(&banks, 2);
         assert_eq!(joltage, 357);
     }
 
     #[test]
     fn large_sum_joltage() {
         let banks = read_input(Input::Large).unwrap();
-        let joltage = calculate_total_output_joltage(&banks);
+        let joltage = calculate_total_output_joltage(&banks, 2);
         assert_eq!(joltage, 17031);
     }
 
     #[test]
     fn small_sum_joltage_ext() {
         let banks = read_input(Input::Small).unwrap();
-        let joltage = calculate_total_output_joltage_ext(&banks);
+        let joltage = calculate_total_output_joltage(&banks, 12);
         assert_eq!(joltage, 3121910778619);
     }
 }
