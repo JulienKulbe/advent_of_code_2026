@@ -5,7 +5,7 @@ use std::path::Path;
 
 fn main() -> Result<()> {
     let banks = read_input(Input::Small)?;
-    let joltage = calculate_total_output_joltage(&banks, 2);
+    let joltage = calculate_total_output_joltage(&banks, 12);
     println!("Total output is {}", joltage);
     Ok(())
 }
@@ -34,20 +34,21 @@ fn calculate_total_output_joltage(banks: &BatteryBanks, digits: usize) -> usize 
 }
 
 fn calculate_joltage_ext(bank: &BatteryBank, digits: usize) -> usize {
-    let mut max_values = Vec::<u8>::with_capacity(digits);
-    let mut bank_index = 0;
-    for index in (0..digits).rev() {
-        let max = bank
-            .iter()
-            .enumerate()
-            .take(bank.len() - index)
-            .skip(bank_index)
-            .rev()
-            .max_by(|x, y| x.1.cmp(&y.1))
-            .unwrap();
-        bank_index = max.0 + 1;
-        max_values.push(*max.1);
-    }
+    let max_values = (0..digits)
+        .rev()
+        .scan(0_usize, |bank_index, digit_index| {
+            let max = bank
+                .iter()
+                .enumerate()
+                .take(bank.len() - digit_index)
+                .skip(*bank_index)
+                .rev()
+                .max_by(|x, y| x.1.cmp(&y.1))
+                .unwrap();
+            *bank_index = max.0 + 1;
+            Some(max.1)
+        })
+        .collect::<Vec<_>>();
     println!("{:?}", max_values);
 
     let max_joltage = max_values
@@ -55,7 +56,7 @@ fn calculate_joltage_ext(bank: &BatteryBank, digits: usize) -> usize {
         .rev()
         .enumerate()
         .fold(0_usize, |max, (index, value)|
-            max + 10_usize.pow(index as u32) * *value as usize,
+            max + 10_usize.pow(index as u32) * **value as usize,
         );
     println!("{:?}", max_joltage);
 
@@ -85,5 +86,12 @@ mod tests {
         let banks = read_input(Input::Small).unwrap();
         let joltage = calculate_total_output_joltage(&banks, 12);
         assert_eq!(joltage, 3121910778619);
+    }
+
+    #[test]
+    fn large_sum_joltage_ext() {
+        let banks = read_input(Input::Large).unwrap();
+        let joltage = calculate_total_output_joltage(&banks, 12);
+        assert_eq!(joltage, 168575096286051);
     }
 }
