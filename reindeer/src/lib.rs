@@ -9,6 +9,10 @@ pub enum Input {
     Large,
 }
 
+/// Reads the input files into a buffered reader
+///
+/// # Errors
+/// Returns an error if the input file is not available.
 pub fn read_file(base_path: &Path, input: Input) -> Result<BufReader<File>> {
     let file_name = match input {
         Input::Small => "input_small.txt",

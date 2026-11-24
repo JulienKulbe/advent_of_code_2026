@@ -6,7 +6,7 @@ use std::path::Path;
 fn main() -> Result<()> {
     let banks = read_input(Input::Small)?;
     let joltage = calculate_total_output_joltage(&banks, 12);
-    println!("Total output is {}", joltage);
+    println!("Total output is {joltage}");
     Ok(())
 }
 
@@ -20,7 +20,7 @@ fn read_input(input: Input) -> Result<BatteryBanks> {
         .map(|line| {
             line.unwrap()
                 .chars()
-                .map(|c| c as u8 - '0' as u8)
+                .map(|c| c as u8 - b'0')
                 .collect::<BatteryBank>()
         })
         .collect::<BatteryBanks>())
@@ -43,13 +43,13 @@ fn calculate_joltage_ext(bank: &BatteryBank, digits: usize) -> usize {
                 .take(bank.len() - digit_index)
                 .skip(*bank_index)
                 .rev()
-                .max_by(|x, y| x.1.cmp(&y.1))
+                .max_by(|x, y| x.1.cmp(y.1))
                 .unwrap();
             *bank_index = max.0 + 1;
             Some(max.1)
         })
         .collect::<Vec<_>>();
-    println!("{:?}", max_values);
+    println!("{max_values:?}");
 
     let max_joltage = max_values
         .iter()
@@ -58,7 +58,7 @@ fn calculate_joltage_ext(bank: &BatteryBank, digits: usize) -> usize {
         .fold(0_usize, |max, (index, value)|
             max + 10_usize.pow(index as u32) * **value as usize,
         );
-    println!("{:?}", max_joltage);
+    println!("{max_joltage:?}");
 
     max_joltage
 }
