@@ -8,6 +8,10 @@ fn main() -> Result<()> {
     let sum = sum_available_fresh_ingredients(&input.fresh, &input.available);
     println!("Part 1 result: {sum}");
 
+    let input = read_input(Input::Small)?;
+    let sum = sum_fresh_ingredients(&input.fresh);
+    println!("Part 2 result: {sum}");
+
     Ok(())
 }
 
@@ -20,6 +24,7 @@ struct FreshIngredients {
     data: Vec<IngredientRange>
 }
 
+#[derive(Debug, Copy, Clone)]
 struct IngredientRange {
     first: usize,
     last: usize
@@ -41,6 +46,34 @@ impl FreshIngredients {
             .any(|i|
                 i.first <= ingredient && ingredient <= i.last
             )
+    }
+
+    fn refresh(&self) -> Self {
+        let mut sorted_data = self.data.clone();
+        sorted_data.sort_by(|a, b| a.first.cmp(&b.first));
+
+        let mut data = vec![sorted_data[0].clone()];
+        for current in sorted_data.iter().skip(1) {
+            let previous = data.last_mut().unwrap();
+
+            // no intersection between previous and current...
+            if previous.last < current.first {
+                // ...so push current at the end
+                data.push(current.clone());
+            // both ranges intersect with each other...
+            } else if previous.last < current.last {
+                // ...modify previous range with current value
+                previous.last = current.last;
+            }
+        }
+
+        Self { data }
+    }
+
+    fn count(&self) -> usize {
+        self.data.iter()
+            .map(|i| i.last - i.first + 1)
+            .sum()
     }
 }
 
@@ -83,22 +116,40 @@ fn sum_available_fresh_ingredients(fresh: &FreshIngredients, available: &Ingredi
         .count()
 }
 
+fn sum_fresh_ingredients(fresh: &FreshIngredients) -> usize {
+    fresh.refresh().count()
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::{read_input, sum_available_fresh_ingredients};
+    use crate::{read_input, sum_available_fresh_ingredients, sum_fresh_ingredients};
     use reindeer::Input;
 
     #[test]
-    fn small_sum_fresh_ingredients() {
+    fn small_sum_fresh_available_ingredients() {
         let input = read_input(Input::Small).unwrap();
         let sum = sum_available_fresh_ingredients(&input.fresh, &input.available);
         assert_eq!(3, sum);
     }
 
     #[test]
-    fn large_sum_fresh_ingredients() {
+    fn large_sum_fresh_available_ingredients() {
         let input = read_input(Input::Large).unwrap();
         let sum = sum_available_fresh_ingredients(&input.fresh, &input.available);
         assert_eq!(701, sum);
+    }
+
+    #[test]
+    fn small_sum_fresh_ingredients() {
+        let input = read_input(Input::Small).unwrap();
+        let sum = sum_fresh_ingredients(&input.fresh);
+        assert_eq!(14, sum);
+    }
+
+    #[test]
+    fn large_sum_fresh_ingredients() {
+        let input = read_input(Input::Large).unwrap();
+        let sum = sum_fresh_ingredients(&input.fresh);
+        assert_eq!(352340558684863, sum);
     }
 }
