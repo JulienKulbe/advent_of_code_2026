@@ -1,0 +1,12 @@
+[package]
+name = "day_06"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+
+[dependencies]
+reindeer = { path = "../reindeer" }
+anyhow = { workspace = true}
+
+[lints]
+workspace = true

@@ -31,7 +31,7 @@ struct IngredientRange {
 }
 
 impl FreshIngredients {
-    fn new() -> Self {
+    const fn new() -> Self {
         Self {
             data: Vec::new()
         }
@@ -50,16 +50,16 @@ impl FreshIngredients {
 
     fn refresh(&self) -> Self {
         let mut sorted_data = self.data.clone();
-        sorted_data.sort_by(|a, b| a.first.cmp(&b.first));
+        sorted_data.sort_by_key(|range| range.first);
 
-        let mut data = vec![sorted_data[0].clone()];
+        let mut data = vec![sorted_data[0]];
         for current in sorted_data.iter().skip(1) {
             let previous = data.last_mut().unwrap();
 
             // no intersection between previous and current...
             if previous.last < current.first {
                 // ...so push current at the end
-                data.push(current.clone());
+                data.push(*current);
             // both ranges intersect with each other...
             } else if previous.last < current.last {
                 // ...modify previous range with current value
@@ -91,15 +91,12 @@ fn read_input(input: Input) -> Result<FileInput> {
         let line = line?;
         if line.is_empty() {
             found_empty_line = true;
-        }
-        else {
-            if found_empty_line {
-                available.0.push(line.parse::<usize>()?);
-            } else {
-                let (first, last) = line.split_once('-')
-                    .ok_or(anyhow::anyhow!("Invalid line '{}'", line))?;
-                fresh.add(first.parse()?, last.parse()?);
-            }
+        } else if found_empty_line {
+            available.0.push(line.parse::<usize>()?);
+        } else {
+            let (first, last) = line.split_once('-')
+                .ok_or(anyhow::anyhow!("Invalid line '{line}'"))?;
+            fresh.add(first.parse()?, last.parse()?);
         }
     }
 
@@ -122,8 +119,7 @@ fn sum_fresh_ingredients(fresh: &FreshIngredients) -> usize {
 
 #[cfg(test)]
 mod tests {
-    use crate::{read_input, sum_available_fresh_ingredients, sum_fresh_ingredients};
-    use reindeer::Input;
+    use crate::*;
 
     #[test]
     fn small_sum_fresh_available_ingredients() {
