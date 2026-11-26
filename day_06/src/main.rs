@@ -141,7 +141,7 @@ fn read_input_ext(input: Input) -> Result<CephalopodsEquations> {
 
     let last_line = lines.last().ok_or(anyhow::anyhow!("Missing last line"))?;
     let operations = last_line.parse::<OperationIndices>()?;
-    let length = last_line.len();
+    let length = last_line.len() + 1;
 
     Ok(CephalopodsEquations { rows, operations, length })
 }
@@ -194,18 +194,19 @@ fn calculate_sum_of_cephalopods_equations(equations: &CephalopodsEquations) -> u
         })
     }
 
-    for operationIndex in operation_indices {
-        let mut result = match operationIndex.operation {
+    for operation_index in operation_indices {
+        let mut result = match operation_index.operation {
             Operation::Addition => 0,
             Operation::Multiply => 1,
         };
 
-        for index in operationIndex.start..operationIndex.end {
+        for index in operation_index.start..operation_index.end {
             let mut current: Option<u64> = None;
+
             for values in &equations.rows {
                 let value = values.0.iter()
                     .find(|value_index| { value_index.index == index });
-                if let Some(ValueIndex { value, index }) = value {
+                if let Some(ValueIndex { value, index: _ }) = value {
                     let value = *value as u64;
                     current = if let Some(current) = current {
                         Some(current * 10 + value)
@@ -215,7 +216,7 @@ fn calculate_sum_of_cephalopods_equations(equations: &CephalopodsEquations) -> u
                 }
             }
             if let Some(current) = current {
-                match operationIndex.operation {
+                match operation_index.operation {
                     Operation::Addition => {
                         result += current;
                     }
@@ -261,6 +262,6 @@ mod tests {
     fn large_sum_cephalopods_equations() {
         let input = read_input_ext(Input::Large).unwrap();
         let sum = calculate_sum_of_cephalopods_equations(&input);
-        assert_eq!(sum, 1);
+        assert_eq!(12377473011151_u64, sum);
     }
 }
